@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    tools:ignore="SpUsage"
+    >
+
+    <fragment
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MapsActivity" />
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/ll_data"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentBottom="true"
+            >
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="75dp"
+                android:orientation="vertical"
+                android:background="@color/darkRed2Transparent"
+                >
+
+                <TextView
+                    android:id="@+id/tv_text1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorAccent"
+                    android:textSize="19dp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_text2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorAccent"
+                    android:textSize="16dp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_text3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorAccent"
+                    android:textSize="16dp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    />
+
+            </LinearLayout>
+
+            <!-- TODO chart -->
+            <View
+                android:id="@+id/chart"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="75dp"
+                android:background="@color/black"
+                />
+
+        </LinearLayout>
+
+        <!-- separator -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/darkRed1"
+            android:layout_above="@+id/ll_data"
+            />
+
+    </RelativeLayout>
+
+
+</FrameLayout>

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Korona</string>
+    <string name="title_activity_maps">@string/app_name</string>
+
+
+    <string name="error_reading_data">Error reading data</string>
+    <string name="error_requesting_data">Error requesting data</string>
+
+</resources>
