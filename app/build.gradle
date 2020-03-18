@@ -6,16 +6,16 @@ android {
 
     defaultConfig {
         applicationId "com.bitwize10.korona"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
+        versionCode 90
+        versionName "0.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // http://tools.android.com/tech-docs/new-build-system/resource-shrinking
         // Any resources for languages not specified are removed.
-        resConfigs "en", "sl"
+        resConfigs "en"
     }
 
     buildTypes {
@@ -23,9 +23,13 @@ android {
             shrinkResources true
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                variant.outputs.all {
+                    outputFileName = "Korona.apk"
+                }
+            }
         }
     }
-
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -52,6 +56,6 @@ dependencies {
     implementation 'net.sf.opencsv:opencsv:2.3'
 
     // https://developers.google.com/maps/documentation/android-sdk/utility/
-    //implementation 'com.google.maps.android:android-maps-utils:0.5'
+    implementation 'com.google.maps.android:android-maps-utils:1.0.0'
 
 }

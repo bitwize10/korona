@@ -14,10 +14,37 @@
         android:layout_height="match_parent"
         tools:context=".MapsActivity" />
 
+    <!-- hide map by default -->
+    <TextView
+        android:id="@+id/map_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/loading_map"
+        android:textColor="@color/colorAccent"
+        android:gravity="center"
+        android:background="@color/darkRed2"
+        android:visibility="visible"
+        />
+
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/gradient_top"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/gradient_bottom"
+            />
+
 
         <LinearLayout
             android:id="@+id/ll_data"
@@ -25,6 +52,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_alignParentBottom="true"
+            android:background="@color/darkRed2Transparent"
             >
 
             <LinearLayout
@@ -32,25 +60,26 @@
                 android:layout_weight="1"
                 android:layout_height="75dp"
                 android:orientation="vertical"
-                android:background="@color/darkRed2Transparent"
                 >
 
                 <TextView
                     android:id="@+id/tv_text1"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/colorAccent"
                     android:textSize="19dp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
                     android:paddingLeft="8dp"
                     android:paddingRight="8dp"
+                    android:ellipsize="end"
                     />
 
                 <TextView
                     android:id="@+id/tv_text2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/colorAccent"
                     android:textSize="16dp"
+                    android:maxLines="1"
                     android:paddingLeft="8dp"
                     android:paddingRight="8dp"
                     />
@@ -59,21 +88,22 @@
                     android:id="@+id/tv_text3"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/colorAccent"
                     android:textSize="16dp"
+                    android:maxLines="1"
                     android:paddingLeft="8dp"
                     android:paddingRight="8dp"
                     />
 
             </LinearLayout>
 
-            <!-- TODO chart -->
-            <View
+            <!-- chart -->
+            <com.bitwize10.korona.ChartView
                 android:id="@+id/chart"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="75dp"
-                android:background="@color/black"
+                android:padding="6dp"
+                android:visibility="gone"
                 />
 
         </LinearLayout>

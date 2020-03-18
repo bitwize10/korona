@@ -1,15 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="colorAccent">#ff0000</color>
+    <color name="colorAccent">@color/red</color>
     <color name="colorPrimary">#8c0000</color>
+    <color name="colorPrimaryTransparent">#808c0000</color>
     <color name="colorPrimaryDark">#300000</color>
     <color name="colorPrimaryDarkTransparent">#80300000</color>
 
+
+    <color name="red">#ff0000</color>
     <color name="darkRed1">#100000</color>
+    <color name="darkRed1Transparent">#D4100000</color>
     <color name="darkRed2">#200000</color>
-    <color name="darkRed2Transparent">#80200000</color>
+    <color name="darkRed2Transparent">#AC200000</color>
 
     <color name="black">#000000</color>
+    <color name="transparent">@android:color/transparent</color>
+
+    <color name="green">#00ff00</color>
+    <color name="darkerGreen">#008c00</color>
+    <color name="darkerGreenTransparent">#80008c00</color>
+    <color name="darkGreen1">#001000</color>
 
 </resources>

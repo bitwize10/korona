@@ -1,9 +1,12 @@
 <resources>
-    <string name="app_name">Korona</string>
-    <string name="title_activity_maps">@string/app_name</string>
 
+    <string name="google_maps_key" translatable="false">AIzaSyAUGwRG75BzrDqbG7JSZRp7dHobG9aHfp0</string>
+
+    <string name="app_name">Korona</string>
 
     <string name="error_reading_data">Error reading data</string>
     <string name="error_requesting_data">Error requesting data</string>
+
+    <string name="loading_map">Loading map …</string>
 
 </resources>
