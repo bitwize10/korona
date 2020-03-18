@@ -73,6 +73,7 @@ public class MapsActivity extends FragmentActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setTheme(R.style.AppTheme);
         setContentView(R.layout.activity_maps);
 
         // transparent statusbar
@@ -81,16 +82,13 @@ public class MapsActivity extends FragmentActivity implements
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
 
-
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         Objects.requireNonNull(mapFragment).getMapAsync(this);
 
-
         readCoordinates();
         requestData();
-
 
     }
 
@@ -165,55 +163,7 @@ public class MapsActivity extends FragmentActivity implements
 
     }
 
-    /*
-    // column 0 is date, column 1 is world, column 1+ is country
-    private void showData(int column) {
-
-        if (column < 1) return;
-        if (column > mAllData.get(0).length-1) return;
-
-        TextView tv1 = findViewById(R.id.tv_text1);
-        TextView tv2 = findViewById(R.id.tv_text2);
-        TextView tv3 = findViewById(R.id.tv_text3);
-
-        String country = mAllData.get(0)[column];
-        String date = mAllData.get(mAllData.size()-1)[0]; // last date in data
-        String today = mAllData.get(mAllData.size()-1)[column]; // number of cases today
-        String yesterday; // number of cases yesterday
-
-        int today_i;
-        try {
-            today_i  = Integer.parseInt(today);
-        } catch (NumberFormatException e) {
-            today_i = 0;
-        }
-
-        int change = 0;
-        char sign = '+';
-
-        if (mAllData.size() > 1) {
-            yesterday = mAllData.get(mAllData.size()-2)[column];
-            try {
-                change = today_i - Integer.parseInt(yesterday);
-            } catch (NumberFormatException e) {
-                change = 0;
-            }
-            if (change < 0) sign = '-';
-        }
-
-        // today's data and change
-        today = NumberFormat.getInstance().format(today_i);
-        today += " ("+sign+NumberFormat.getInstance().format(change)+")";
-
-        tv1.setText(country); // world or country
-        tv2.setText(formatDate(date)); // last date
-        tv3.setText(today);
-
-        updateChart(column);
-
-    }
-    */
-
+    // shows data at the bottom of the screen
     private void showData(String countryName) {
 
         Country country = mCountryCoords.get(countryName);
@@ -249,7 +199,6 @@ public class MapsActivity extends FragmentActivity implements
         updateChart(country.getColumn());
 
     }
-
 
     private void updateChart(int column) {
 
@@ -391,6 +340,7 @@ public class MapsActivity extends FragmentActivity implements
 
                 MarkerOptions markerOptions = new MarkerOptions()
                         .position(coords)
+                        .anchor(0.5f, 0.5f)
                         .draggable(false)
                         .icon(BitmapDescriptorFactory.fromBitmap(icon))
                         .title(country.getName())
@@ -441,7 +391,7 @@ public class MapsActivity extends FragmentActivity implements
 
     private static Bitmap textAsBitmap(final String text, final int fontSize, int fontColor, int bgColor1, int bgColor2) {
 
-        // font
+        // text paint
         Paint paint = new Paint(ANTI_ALIAS_FLAG);
         paint.setTextSize(fontSize);
         paint.setColor(fontColor);
