@@ -8,7 +8,7 @@ android {
         applicationId "com.bitwize10.korona"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 90
+        versionCode 99
         versionName "0.9"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -55,6 +55,7 @@ dependencies {
     // CSV reader/writer
     implementation 'net.sf.opencsv:opencsv:2.3'
 
+    // for marker clustering
     // https://developers.google.com/maps/documentation/android-sdk/utility/
     implementation 'com.google.maps.android:android-maps-utils:1.0.0'
 

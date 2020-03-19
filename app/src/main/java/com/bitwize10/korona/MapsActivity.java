@@ -1,9 +1,12 @@
 package com.bitwize10.korona;
 
+import androidx.annotation.NonNull;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -17,24 +20,32 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.clustering.Cluster;
+import com.google.maps.android.clustering.ClusterManager;
 import com.google.maps.android.ui.IconGenerator;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -52,6 +63,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.zip.CheckedInputStream;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -59,15 +71,22 @@ import static android.graphics.Paint.ANTI_ALIAS_FLAG;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
-        GoogleMap.OnMarkerClickListener,
-        GoogleMap.OnMapClickListener {
+        //GoogleMap.OnMarkerClickListener,
+        GoogleMap.OnMapClickListener,
+        ClusterManager.OnClusterClickListener<ClusterItem>,
+        ClusterManager.OnClusterItemClickListener<ClusterItem> {
 
     static public String DATA_URL = "https://covid.ourworldindata.org/data/total_cases.csv";
 
     private GoogleMap mMap;
+    private ClusterManager<ClusterItem> mClusterManager;
+
+    private String mSelectedCountry = "World";
+    private Typeface mTF;
 
     private List<String[]> mAllData;
     private HashMap<String, Country> mCountryCoords = new HashMap<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,14 +101,34 @@ public class MapsActivity extends FragmentActivity implements
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
 
+
+        // set custom font to TextView
+        TextView tv = findViewById(R.id.map_overlay);
+        mTF = ResourcesCompat.getFont(getApplicationContext(), R.font.audiowide_regular);
+        tv.setTypeface(mTF);
+
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         Objects.requireNonNull(mapFragment).getMapAsync(this);
 
+
+        if (savedInstanceState != null) {
+            mSelectedCountry = savedInstanceState.getString("mSelectedCountry", mSelectedCountry);
+        }
+
+
         readCoordinates();
         requestData();
 
+    }
+
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("mSelectedCountry", mSelectedCountry);
     }
 
 
@@ -122,10 +161,26 @@ public class MapsActivity extends FragmentActivity implements
         mMap.setBuildingsEnabled(false);
 
         // add listeners
-        mMap.setOnMarkerClickListener(this);
+        //mMap.setOnMarkerClickListener(this);
         mMap.setOnMapClickListener(this);
 
+
+        // cluster setup
+        // Initialize the manager with the context and the map.
+        mClusterManager = new ClusterManager<>(this, mMap);
+        mClusterManager.setAnimation(false);
+
+        // custom cluster renderer
+        mClusterManager.setRenderer(new ClusterRenderer(getApplicationContext(), mMap, mClusterManager, mTF, getResources()));
+
+        // Point the map's listeners at the listeners implemented by the cluster manager.
+        mMap.setOnCameraIdleListener(mClusterManager);
+        mMap.setOnMarkerClickListener(mClusterManager);
+        mClusterManager.setOnClusterClickListener(this);
+        mClusterManager.setOnClusterItemClickListener(this);
+
     }
+
 
     private void showMap() {
         // hide map overlay and show map
@@ -142,7 +197,7 @@ public class MapsActivity extends FragmentActivity implements
                     try {
                         mAllData = reader.readAll();
                         fillCountries();
-                        showData("World"); // show world data by default
+                        showData(mSelectedCountry); // show world data by default
                         showMap();
                         addMarkers();
                     } catch (IOException e) {
@@ -150,18 +205,21 @@ public class MapsActivity extends FragmentActivity implements
                         log("ERROR reading data");
                         TextView tv1 = findViewById(R.id.tv_text1);
                         tv1.setText(getString(R.string.error_reading_data));
+                        showMap();
                     }
                 },
                 error -> {
                     log("ERROR requesting data");
                     TextView tv1 = findViewById(R.id.tv_text1);
                     tv1.setText(getString(R.string.error_requesting_data));
+                    showMap();
                 }
         );
         final RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(stringRequest);
 
     }
+
 
     // shows data at the bottom of the screen
     private void showData(String countryName) {
@@ -172,6 +230,7 @@ public class MapsActivity extends FragmentActivity implements
         TextView tv1 = findViewById(R.id.tv_text1);
         TextView tv2 = findViewById(R.id.tv_text2);
         TextView tv3 = findViewById(R.id.tv_text3);
+        tv1.setTypeface(mTF); tv2.setTypeface(mTF); tv3.setTypeface(mTF);
 
         String date = mAllData.get(mAllData.size()-1)[0]; // last date in data
 
@@ -200,6 +259,7 @@ public class MapsActivity extends FragmentActivity implements
 
     }
 
+
     private void updateChart(int column) {
 
         int[] data = new int[mAllData.size()-1]; // skip 1st line
@@ -225,6 +285,7 @@ public class MapsActivity extends FragmentActivity implements
         chart.invalidate(); // redraw
 
     }
+
 
     // fills countries with data
     private void fillCountries() {
@@ -276,6 +337,7 @@ public class MapsActivity extends FragmentActivity implements
 
     }
 
+
     // read country coordinates from CSV file
     private void readCoordinates() {
 
@@ -312,7 +374,7 @@ public class MapsActivity extends FragmentActivity implements
 
     private void addMarkers() {
 
-        int fontSize = dp2px(15);
+        int fontSize = dp2px(12f);
         int fontColor = getResources().getColor(R.color.darkRed1);
         int backgroundColor1r = getResources().getColor(R.color.colorPrimary);
         int backgroundColor2r = getResources().getColor(R.color.red);
@@ -328,51 +390,105 @@ public class MapsActivity extends FragmentActivity implements
             LatLng coords = country.getCoords();
             if (coords.longitude != 0 && coords.longitude != 0) {
 
-                if (country.casesToday() == country.cases2daysAgo()) {
+                if (country.casesToday() <= country.cases2daysAgo()) {
                     color1 = backgroundColor1g;
                     color2 = backgroundColor2g;
                 } else {
                     color1 = backgroundColor1r;
                     color2 = backgroundColor2r;
                 }
-                today = NumberFormat.getInstance().format(country.casesToday());
-                icon = textAsBitmap(today, fontSize, fontColor, color1, color2);
 
+                today = NumberFormat.getInstance().format(country.casesToday());
+                icon = textAsBitmap(today, fontSize, fontColor, mTF, color1, color2);
+
+                /*
                 MarkerOptions markerOptions = new MarkerOptions()
                         .position(coords)
                         .anchor(0.5f, 0.5f)
                         .draggable(false)
                         .icon(BitmapDescriptorFactory.fromBitmap(icon))
                         .title(country.getName())
+                        .zIndex(country.casesToday())
                         ;
 
                 Marker marker = mMap.addMarker(markerOptions);
                 marker.setTag(country);
 
+                if (mSelectedCountry.equals(country.getName())) {
+                    marker.showInfoWindow();
+                }
+                */
+
+                // add to cluster
+                ClusterItem clusterItem = new ClusterItem(country, icon);
+                clusterItem.setSelected(mSelectedCountry.equals(country.getName()));
+                mClusterManager.addItem(clusterItem);
+
             }
         }
 
+        // Force a re-cluster. You may want to call this after adding new item(s)
+        mClusterManager.cluster();
+
     }
 
 
+    /*
     @Override
     public boolean onMarkerClick(Marker marker){
-        //log("clicked on marker: " +marker.getId());
-
         Country country = (Country) marker.getTag();
         if (country != null) {
             showData(country.getName());
+            mSelectedCountry = country.getName();
         }
-
         return false; // consume event? (false by default - do not consume event and center camera)
-
     }
+    */
+
 
     @Override
     public void onMapClick(LatLng point) {
         //log("clicked on map: " +point.latitude+ ", "+point.longitude);
-        showData("World");
+        mSelectedCountry = "World";
+        showData(mSelectedCountry);
     }
+
+
+    @Override
+    public boolean onClusterClick(Cluster<ClusterItem> cluster) {
+        // Zoom in the cluster. Need to create LatLngBounds and including all the cluster items
+        // inside of bounds, then animate to center of the bounds.
+
+        // Create the builder to collect all essential cluster items for the bounds.
+        LatLngBounds.Builder builder = LatLngBounds.builder();
+        for (com.google.maps.android.clustering.ClusterItem item : cluster.getItems()) {
+            builder.include(item.getPosition());
+        }
+        // Get the LatLngBounds
+        final LatLngBounds bounds = builder.build();
+
+        // Animate camera to the bounds
+        try {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
+
+
+    @Override
+    public boolean onClusterItemClick(ClusterItem item) {
+        Country country = item.getCountry();
+        if (country != null) {
+            showData(country.getName());
+            mSelectedCountry = country.getName();
+        }
+        return false; // consume event? (false by default - do not consume event and center camera)
+    }
+
 
 
     @SuppressLint("SimpleDateFormat")
@@ -389,14 +505,14 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 
-    private static Bitmap textAsBitmap(final String text, final int fontSize, int fontColor, int bgColor1, int bgColor2) {
+    public static Bitmap textAsBitmap(final String text, final int fontSize, int fontColor, Typeface typeface, int bgColor1, int bgColor2) {
 
         // text paint
         Paint paint = new Paint(ANTI_ALIAS_FLAG);
         paint.setTextSize(fontSize);
         paint.setColor(fontColor);
         paint.setTextAlign(Paint.Align.LEFT);
-        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTypeface(typeface);
         paint.setElegantTextHeight(true);
 
         Rect rect = new Rect();
@@ -404,19 +520,19 @@ public class MapsActivity extends FragmentActivity implements
         int width = rect.width();
         int height = rect.height();
 
-        final int padding = dp2px(10f);
-        width  += padding;
-        height += padding;
+        final int paddingTB = dp2px(10f);
+        final int paddingLR = dp2px(12f);
+        width  += paddingLR;
+        height += paddingTB;
 
 
         Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
 
 
-        // paint the background
+        // draw background
         Paint rect_paint = new Paint(ANTI_ALIAS_FLAG);
         rect_paint.setStyle(Paint.Style.FILL);
-        //rect_paint.setColor(backgroundColor);
         LinearGradient gradient = new LinearGradient(
                 0, 0,
                 0, height,
@@ -428,6 +544,7 @@ public class MapsActivity extends FragmentActivity implements
         RectF rectF = new RectF(0, 0, width, height);
         canvas.drawRoundRect(rectF, rounded, rounded, rect_paint);
 
+        // draw background stroke
         int strokeWidth = dp2px(1.5f);
         rect_paint.reset();
         rect_paint.setStyle(Paint.Style.STROKE);
@@ -437,9 +554,10 @@ public class MapsActivity extends FragmentActivity implements
         rounded = dp2px(3.8f);
         canvas.drawRoundRect(rectF, rounded, rounded, rect_paint);
 
+
         // draw text
         canvas.getClipBounds(rect);
-        canvas.drawText(text, (padding/2f)-1, (height - padding/2f)-1, paint);
+        canvas.drawText(text, (paddingLR/2f)-1, (height - paddingTB/2f)-1, paint);
 
         return bitmap;
 
