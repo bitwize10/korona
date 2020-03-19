@@ -110,6 +110,7 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
         int clusterCases2daysAgo = 0;
 
         for (ClusterItem ci : cluster.getItems()) {
+            ci.setSelected(false);
             clusterCasesToday += ci.getCountry().casesToday();
             clusterCases2daysAgo += ci.getCountry().cases2daysAgo();
         }
@@ -143,7 +144,7 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
 
     @Override
     protected void onClusterItemUpdated(ClusterItem item, Marker marker) {
-        // do nothing
+        item.setSelected(false);
     }
 
 

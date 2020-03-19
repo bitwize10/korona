@@ -71,7 +71,6 @@ import static android.graphics.Paint.ANTI_ALIAS_FLAG;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
-        //GoogleMap.OnMarkerClickListener,
         GoogleMap.OnMapClickListener,
         ClusterManager.OnClusterClickListener<ClusterItem>,
         ClusterManager.OnClusterItemClickListener<ClusterItem> {
@@ -160,8 +159,7 @@ public class MapsActivity extends FragmentActivity implements
         mMap.getUiSettings().setTiltGesturesEnabled(false);
         mMap.setBuildingsEnabled(false);
 
-        // add listeners
-        //mMap.setOnMarkerClickListener(this);
+        // add listener
         mMap.setOnMapClickListener(this);
 
 
@@ -401,24 +399,6 @@ public class MapsActivity extends FragmentActivity implements
                 today = NumberFormat.getInstance().format(country.casesToday());
                 icon = textAsBitmap(today, fontSize, fontColor, mTF, color1, color2);
 
-                /*
-                MarkerOptions markerOptions = new MarkerOptions()
-                        .position(coords)
-                        .anchor(0.5f, 0.5f)
-                        .draggable(false)
-                        .icon(BitmapDescriptorFactory.fromBitmap(icon))
-                        .title(country.getName())
-                        .zIndex(country.casesToday())
-                        ;
-
-                Marker marker = mMap.addMarker(markerOptions);
-                marker.setTag(country);
-
-                if (mSelectedCountry.equals(country.getName())) {
-                    marker.showInfoWindow();
-                }
-                */
-
                 // add to cluster
                 ClusterItem clusterItem = new ClusterItem(country, icon);
                 clusterItem.setSelected(mSelectedCountry.equals(country.getName()));
@@ -431,19 +411,6 @@ public class MapsActivity extends FragmentActivity implements
         mClusterManager.cluster();
 
     }
-
-
-    /*
-    @Override
-    public boolean onMarkerClick(Marker marker){
-        Country country = (Country) marker.getTag();
-        if (country != null) {
-            showData(country.getName());
-            mSelectedCountry = country.getName();
-        }
-        return false; // consume event? (false by default - do not consume event and center camera)
-    }
-    */
 
 
     @Override
@@ -478,7 +445,7 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 
-
+    // individual item
     @Override
     public boolean onClusterItemClick(ClusterItem item) {
         Country country = item.getCountry();
