@@ -75,16 +75,16 @@ public class MapsActivity extends FragmentActivity implements
         ClusterManager.OnClusterClickListener<ClusterItem>,
         ClusterManager.OnClusterItemClickListener<ClusterItem> {
 
-    static public String DATA_URL = "https://covid.ourworldindata.org/data/total_cases.csv";
+    private static String DATA_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv";
 
     private GoogleMap mMap;
     private ClusterManager<ClusterItem> mClusterManager;
-
-    private String mSelectedCountry = "World";
     private Typeface mTF;
 
-    private List<String[]> mAllData;
-    private HashMap<String, Country> mCountryCoords = new HashMap<>();
+    private String mSelectedCountry = "World";
+    private String mLastDate = "";
+
+    private HashMap<String, Country> mCountries = new HashMap<>();
 
 
     @Override
@@ -117,8 +117,6 @@ public class MapsActivity extends FragmentActivity implements
             mSelectedCountry = savedInstanceState.getString("mSelectedCountry", mSelectedCountry);
         }
 
-
-        readCoordinates();
         requestData();
 
     }
@@ -142,6 +140,7 @@ public class MapsActivity extends FragmentActivity implements
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         mMap = googleMap;
 
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -162,9 +161,7 @@ public class MapsActivity extends FragmentActivity implements
         // add listener
         mMap.setOnMapClickListener(this);
 
-
         // cluster setup
-        // Initialize the manager with the context and the map.
         mClusterManager = new ClusterManager<>(this, mMap);
         mClusterManager.setAnimation(false);
 
@@ -190,21 +187,18 @@ public class MapsActivity extends FragmentActivity implements
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, DATA_URL,
                 response -> {
-                    //log("CSV data: " +response);
                     CSVReader reader = new CSVReader(new StringReader(response));
                     try {
-                        mAllData = reader.readAll();
-                        fillCountries();
+                        fillCountries(reader.readAll());
                         showData(mSelectedCountry); // show world data by default
-                        showMap();
                         addMarkers();
                     } catch (IOException e) {
                         e.printStackTrace();
                         log("ERROR reading data");
                         TextView tv1 = findViewById(R.id.tv_text1);
                         tv1.setText(getString(R.string.error_reading_data));
-                        showMap();
                     }
+                    showMap();
                 },
                 error -> {
                     log("ERROR requesting data");
@@ -222,7 +216,7 @@ public class MapsActivity extends FragmentActivity implements
     // shows data at the bottom of the screen
     private void showData(String countryName) {
 
-        Country country = mCountryCoords.get(countryName);
+        Country country = mCountries.get(countryName);
         if (country == null) return;
 
         TextView tv1 = findViewById(R.id.tv_text1);
@@ -230,142 +224,96 @@ public class MapsActivity extends FragmentActivity implements
         TextView tv3 = findViewById(R.id.tv_text3);
         tv1.setTypeface(mTF); tv2.setTypeface(mTF); tv3.setTypeface(mTF);
 
-        String date = mAllData.get(mAllData.size()-1)[0]; // last date in data
-
         int change = country.casesToday() - country.casesYesterday();
-        char sign = (change < 0)? '-' : '+'; // just in case it goes down somehow
+        char sign = (change < 0)? '-' : '+';
 
-        // today's data and change
         String today = NumberFormat.getInstance().format(country.casesToday());
         today += " ("+sign+NumberFormat.getInstance().format(change)+")";
 
-        if (country.casesToday() == country.cases2daysAgo()) {
-            tv1.setTextColor(getResources().getColor(R.color.green));
-            tv2.setTextColor(getResources().getColor(R.color.green));
-            tv3.setTextColor(getResources().getColor(R.color.green));
-        } else {
-            tv1.setTextColor(getResources().getColor(R.color.red));
-            tv2.setTextColor(getResources().getColor(R.color.red));
-            tv3.setTextColor(getResources().getColor(R.color.red));
+        switch (country.daysNoChanges()) {
+            case 0:
+            case 1:
+                tv1.setTextColor(getResources().getColor(R.color.red));
+                tv2.setTextColor(getResources().getColor(R.color.red));
+                tv3.setTextColor(getResources().getColor(R.color.red));
+                break;
+            case 2:
+            case 3:
+            case 4:
+                tv1.setTextColor(getResources().getColor(R.color.orange));
+                tv2.setTextColor(getResources().getColor(R.color.orange));
+                tv3.setTextColor(getResources().getColor(R.color.orange));
+                break;
+            case 5:
+            case 6:
+                tv1.setTextColor(getResources().getColor(R.color.yellow));
+                tv2.setTextColor(getResources().getColor(R.color.yellow));
+                tv3.setTextColor(getResources().getColor(R.color.yellow));
+                break;
+            default:
+                tv1.setTextColor(getResources().getColor(R.color.green));
+                tv2.setTextColor(getResources().getColor(R.color.green));
+                tv3.setTextColor(getResources().getColor(R.color.green));
         }
 
         tv1.setText(country.getName()); // world or country
-        tv2.setText(formatDate(date)); // last date
+        tv2.setText(formatDate(mLastDate)); // last date
         tv3.setText(today);
 
-        updateChart(country.getColumn());
+        updateChart(country);
 
     }
 
 
-    private void updateChart(int column) {
-
-        int[] data = new int[mAllData.size()-1]; // skip 1st line
-        int cases;
-        String value;
-        for (int i = 1; i < mAllData.size(); i++) {
-            value = mAllData.get(i)[column];
-            if (value.isEmpty()) {
-                data[i-1] = 0;
-            } else {
-                try {
-                    cases = Integer.parseInt(value);
-                    data[i-1] = cases;
-                } catch (NumberFormatException e) {
-                    data[i-1] = 0;
-                }
-            }
-        }
+    private void updateChart(Country country) {
 
         ChartView chart = findViewById(R.id.chart);
         chart.setVisibility(View.VISIBLE);
-        chart.setData(data);
+        chart.setCountry(country);
         chart.invalidate(); // redraw
 
     }
 
 
     // fills countries with data
-    private void fillCountries() {
+    private void fillCountries(List<String[]> allData) {
 
-        String[] header = mAllData.get(0); // read the header: date, world, country1, country2, ...
-        String countryName, today, yesterday, twoDaysAgo;
-        for (int column = 1; column < header.length; column++) { // skip first column
-            countryName = header[column];
+        // header is: Province/State,Country/Region,Lat,Long,day1,day2,...
+        String[] header = allData.get(0);
+        mLastDate = header[header.length-1];
 
-            if (mAllData.size() > 2) {
-                today = mAllData.get(mAllData.size() - 1)[column]; // number of cases today
-                yesterday = mAllData.get(mAllData.size() - 2)[column]; // number of cases yesterday
-                twoDaysAgo = mAllData.get(mAllData.size() - 3)[column]; // number of cases 2 days ago
+        String provinceName, countryName, lat, lon;
+        Country country;
+        int[] data;
+        int[] worldData = new int[allData.get(0).length-4];
 
-                int today_i, yesterday_i, twoDaysAgo_i;
-                try {
-                    twoDaysAgo_i = Integer.parseInt(twoDaysAgo);
-                } catch (NumberFormatException e) {
-                    twoDaysAgo_i = 0;
-                }
-                try {
-                    yesterday_i = Integer.parseInt(yesterday);
-                } catch (NumberFormatException e) {
-                    yesterday_i = 0;
-                }
-                try {
-                    today_i = Integer.parseInt(today);
-                } catch (NumberFormatException e) {
-                    today_i = yesterday_i;
-                }
+        for (int row = 1; row < allData.size(); row++) { // skip first row
+            String[] rowData = allData.get(row);
+            provinceName = rowData[0];
+            countryName = rowData[1];
+            lat = rowData[2];
+            lon = rowData[3];
 
-                Country country = mCountryCoords.get(countryName);
-                if (country != null) {
-                    country.setColumn(column);
-                    country.setCasesToday(today_i);
-                    country.setCasesYesterday(yesterday_i);
-                    country.setCases2daysAgo(twoDaysAgo_i);
-                } else { // country does not have coordinates (World also falls here)
-                    Country c = new Country(countryName);
-                    c.setColumn(column);
-                    c.setCasesToday(today_i);
-                    c.setCasesYesterday(yesterday_i);
-                    c.setCases2daysAgo(twoDaysAgo_i);
-                    mCountryCoords.put(countryName, c);
-                }
+            if (!provinceName.isEmpty()) countryName = provinceName;
+            country = new Country(countryName, lat, lon);
+
+            // read the data
+            data = new int[rowData.length-4];
+            for (int column = 4; column < rowData.length; column++) { // skip first 4 columns
+                data[column-4] = Integer.parseInt(rowData[column]);
+                worldData[column-4] += data[column-4];
             }
+            country.setData(data);
+
+            // add country
+            mCountries.put(countryName, country);
 
         }
 
-    }
-
-
-    // read country coordinates from CSV file
-    private void readCoordinates() {
-
-        Context ctx = getApplicationContext();
-        String datafile = "countries"; // filename *without* extension!
-
-        try {
-            InputStream ins = ctx.getResources().openRawResource(
-                    ctx.getResources().getIdentifier(datafile, "raw",
-                            ctx.getPackageName())
-            );
-            BufferedReader br = new BufferedReader(new InputStreamReader(ins));
-
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                double lat = Double.parseDouble(data[0]);
-                double lon = Double.parseDouble(data[1]);
-                String countryName = data[2];
-                mCountryCoords.put(countryName, new Country(countryName, lat, lon));
-            }
-
-            br.close();
-        } catch (FileNotFoundException e) {
-            log("ERROR file not found: " +e);
-        } catch (IOException e) {
-            log("ERROR reading file: " +e);
-        } catch (NumberFormatException e) {
-            log("ERROR parsing coordinates: " +e);
-        }
+        // add world
+        country = new Country("World");
+        country.setData(worldData);
+        mCountries.put(country.getName(), country);
 
     }
 
@@ -374,8 +322,13 @@ public class MapsActivity extends FragmentActivity implements
 
         int fontSize = dp2px(12f);
         int fontColor = getResources().getColor(R.color.darkRed1);
-        int backgroundColor1r = getResources().getColor(R.color.colorPrimary);
+
+        int backgroundColor1r = getResources().getColor(R.color.darkerRed);
         int backgroundColor2r = getResources().getColor(R.color.red);
+        int backgroundColor1o = getResources().getColor(R.color.darkerOrange);
+        int backgroundColor2o = getResources().getColor(R.color.orange);
+        int backgroundColor1y = getResources().getColor(R.color.darkerYellow);
+        int backgroundColor2y = getResources().getColor(R.color.yellow);
         int backgroundColor1g = getResources().getColor(R.color.darkerGreen);
         int backgroundColor2g = getResources().getColor(R.color.green);
         int color1, color2;
@@ -383,17 +336,31 @@ public class MapsActivity extends FragmentActivity implements
         String today;
         Bitmap icon;
 
-        for (Country country : mCountryCoords.values()) {
+        for (Country country : mCountries.values()) {
             if (country.casesToday() == 0) continue;
             LatLng coords = country.getCoords();
             if (coords.longitude != 0 && coords.longitude != 0) {
 
-                if (country.casesToday() <= country.cases2daysAgo()) {
-                    color1 = backgroundColor1g;
-                    color2 = backgroundColor2g;
-                } else {
-                    color1 = backgroundColor1r;
-                    color2 = backgroundColor2r;
+                switch (country.daysNoChanges()) {
+                    case 0:
+                    case 1:
+                        color1 = backgroundColor1r;
+                        color2 = backgroundColor2r;
+                        break;
+                    case 2:
+                    case 3:
+                    case 4:
+                        color1 = backgroundColor1o;
+                        color2 = backgroundColor2o;
+                        break;
+                    case 5:
+                    case 6:
+                        color1 = backgroundColor1y;
+                        color2 = backgroundColor2y;
+                        break;
+                    default:
+                        color1 = backgroundColor1g;
+                        color2 = backgroundColor2g;
                 }
 
                 today = NumberFormat.getInstance().format(country.casesToday());
@@ -407,7 +374,7 @@ public class MapsActivity extends FragmentActivity implements
             }
         }
 
-        // Force a re-cluster. You may want to call this after adding new item(s)
+        // force a re-cluster
         mClusterManager.cluster();
 
     }
@@ -460,7 +427,7 @@ public class MapsActivity extends FragmentActivity implements
 
     @SuppressLint("SimpleDateFormat")
     private String formatDate(String date_string) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yy"); // example 1/28/20
         Date date = null;
         try {
             date = sdf.parse(date_string);

@@ -23,7 +23,7 @@ import java.text.NumberFormat;
 
 import static com.bitwize10.korona.MapsActivity.dp2px;
 
-// custom cluster renderer
+
 public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
 
     private Context mCtx;
@@ -34,6 +34,8 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
     private int mFontSize;
     private int mFontColor;
     private int mBackgroundColor1r, mBackgroundColor2r;
+    private int mBackgroundColor1o, mBackgroundColor2o;
+    private int mBackgroundColor1y, mBackgroundColor2y;
     private int mBackgroundColor1g, mBackgroundColor2g;
 
 
@@ -47,8 +49,13 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
 
         mFontSize = dp2px(17f);
         mFontColor = res.getColor(R.color.darkRed1);
-        mBackgroundColor1r = res.getColor(R.color.colorPrimary);
+
+        mBackgroundColor1r = res.getColor(R.color.darkerRed);
         mBackgroundColor2r = res.getColor(R.color.red);
+        mBackgroundColor1o = res.getColor(R.color.darkerOrange);
+        mBackgroundColor2o = res.getColor(R.color.orange);
+        mBackgroundColor1y = res.getColor(R.color.darkerYellow);
+        mBackgroundColor2y = res.getColor(R.color.yellow);
         mBackgroundColor1g = res.getColor(R.color.darkerGreen);
         mBackgroundColor2g = res.getColor(R.color.green);
 
@@ -104,15 +111,25 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
 
         int color1, color2;
         int clusterCasesToday = 0;
-        int clusterCases2daysAgo = 0;
+        int clusterCases4daysAgo = 0;
+        int clusterCases6daysAgo = 0;
+        int clusterCases7daysAgo = 0;
 
         for (ClusterItem ci : cluster.getItems()) {
             ci.setSelected(false);
             clusterCasesToday += ci.getCountry().casesToday();
-            clusterCases2daysAgo += ci.getCountry().cases2daysAgo();
+            clusterCases4daysAgo += ci.getCountry().casesNdaysAgo(4);
+            clusterCases6daysAgo += ci.getCountry().casesNdaysAgo(6);
+            clusterCases7daysAgo += ci.getCountry().casesNdaysAgo(7);
         }
 
-        if (clusterCasesToday <= clusterCases2daysAgo) {
+        if (clusterCasesToday == clusterCases4daysAgo) {
+            color1 = mBackgroundColor1o;
+            color2 = mBackgroundColor2o;
+        } else if (clusterCasesToday == clusterCases6daysAgo) {
+            color1 = mBackgroundColor1y;
+            color2 = mBackgroundColor2y;
+        } else if (clusterCasesToday == clusterCases7daysAgo) {
             color1 = mBackgroundColor1g;
             color2 = mBackgroundColor2g;
         } else {

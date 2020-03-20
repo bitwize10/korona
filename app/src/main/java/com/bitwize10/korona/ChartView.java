@@ -3,7 +3,6 @@ package com.bitwize10.korona;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -17,18 +16,23 @@ import androidx.annotation.Nullable;
 public class ChartView extends View {
 
     private Paint mPaint1, mPaint2;
+
     private int mColor1r, mColor2r; // red
+    private int mColor1o, mColor2o; // orange
+    private int mColor1y, mColor2y; // yellow
     private int mColor1g, mColor2g; // green
 
     private int mWidth = 0;
     private int mHeight = 0;
 
-    private int[] mData; // data for a given country
+    private Country mCountry;
+
 
     public ChartView(Context context) {
         super(context);
         init();
     }
+
 
     public ChartView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -38,9 +42,12 @@ public class ChartView extends View {
 
     private void init() {
 
-        mColor1r = getResources().getColor(R.color.colorAccent);
-        mColor2r = getResources().getColor(R.color.colorPrimaryTransparent);
-
+        mColor1r = getResources().getColor(R.color.red);
+        mColor2r = getResources().getColor(R.color.darkerRedTransparent);
+        mColor1o = getResources().getColor(R.color.orange);
+        mColor2o = getResources().getColor(R.color.darkerOrangeTransparent);
+        mColor1y = getResources().getColor(R.color.yellow);
+        mColor2y = getResources().getColor(R.color.darkerYellowTransparent);
         mColor1g = getResources().getColor(R.color.green);
         mColor2g = getResources().getColor(R.color.darkerGreenTransparent);
 
@@ -73,46 +80,62 @@ public class ChartView extends View {
 
     }
 
-    public void setData(int[] data) {
-        mData = data;
+    public void setCountry(Country country) {
+        mCountry = country;
     }
 
     private void drawData(Canvas canvas) {
-        if (mData == null) return;
+        if (mCountry == null) return;
+
+        int[] data = mCountry.getData();
 
         final int w = mWidth-getPaddingLeft()-getPaddingRight();
         final int h = mHeight-getPaddingBottom()-getPaddingTop();
 
-        final float factorX = (mData.length>1)? (float) w/(mData.length-1) : 1f;
+        final float factorX = (data.length>1)? (float) w/(data.length-1) : 1f;
 
         int maxValue = 0;
-        for (int data : mData) if (data > maxValue) maxValue = data;
+        for (int d : data) if (d > maxValue) maxValue = d;
         final float factorY = (maxValue>0)? (float) h/maxValue : 1f;
 
 
         final Path path = new Path();
         int x, y;
-        int color1 = mColor1r;
-        int color2 = mColor2r;
+        int color1, color2;
 
-        // change color if there is no change in last 3 days
-        if (mData.length > 2 && mData[mData.length-1] - mData[mData.length-3] == 0) {
-            color1 = mColor1g;
-            color2 = mColor2g;
+        switch (mCountry.daysNoChanges()) {
+            case 0:
+            case 1:
+                color1 = mColor1r;
+                color2 = mColor2r;
+                break;
+            case 2:
+            case 3:
+            case 4:
+                color1 = mColor1o;
+                color2 = mColor2o;
+                break;
+            case 5:
+            case 6:
+                color1 = mColor1y;
+                color2 = mColor2y;
+                break;
+            default:
+                color1 = mColor1g;
+                color2 = mColor2g;
         }
 
         // move to first point ...
         x = getPaddingLeft();
-        y = h - (int)(mData[0]*factorY) + getPaddingTop();
+        y = h - (int)(data[0]*factorY) + getPaddingTop();
         path.moveTo(x, y);
 
         // ... and line to the rest
-        for (int i = 1; i < mData.length; i++) {
+        for (int i = 1; i < data.length; i++) {
             x = (int)(i*factorX) + getPaddingLeft();
-            y = h - (int)(mData[i]*factorY) + getPaddingTop();
+            y = h - (int)(data[i]*factorY) + getPaddingTop();
             path.lineTo(x, y);
         }
-
 
         // draw line
         mPaint1.setColor(color1);
@@ -123,7 +146,7 @@ public class ChartView extends View {
         x += halfWidth;
         path.lineTo(x, y); // top right
         path.lineTo(x, h+getPaddingTop()+halfWidth); // bottom right
-        y = h - (int)(mData[0]*factorY) + getPaddingTop();
+        y = h - (int)(data[0]*factorY) + getPaddingTop();
         path.lineTo(getPaddingLeft(), y+halfWidth); // bottom left
         path.close(); // start point
         LinearGradient gradient = new LinearGradient(
