@@ -5,8 +5,6 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -17,14 +15,9 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -35,23 +28,13 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
-import com.google.maps.android.ui.IconGenerator;
 
-import org.w3c.dom.Text;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -59,11 +42,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.zip.CheckedInputStream;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -222,39 +202,33 @@ public class MapsActivity extends FragmentActivity implements
         TextView tv1 = findViewById(R.id.tv_text1);
         TextView tv2 = findViewById(R.id.tv_text2);
         TextView tv3 = findViewById(R.id.tv_text3);
+        int colorR = getResources().getColor(R.color.red);
+        int colorO = getResources().getColor(R.color.orange);
+        int colorY = getResources().getColor(R.color.yellow);
+        int colorG = getResources().getColor(R.color.green);
         tv1.setTypeface(mTF); tv2.setTypeface(mTF); tv3.setTypeface(mTF);
 
-        int change = country.casesToday() - country.casesYesterday();
+        int color;
+        int daysNoChange = country.getDaysNoChange();
+        if (daysNoChange >= 10) {
+            color = colorG;
+        } else if (daysNoChange >= 6) {
+            color = colorY;
+        } else if (daysNoChange >= 2) {
+            color = colorO;
+        } else {
+            color = colorR;
+        }
+
+        tv1.setTextColor(color);
+        tv2.setTextColor(color);
+        tv3.setTextColor(color);
+
+        int change = country.getCasesToday() - country.getCasesYesterday();
         char sign = (change < 0)? '-' : '+';
 
-        String today = NumberFormat.getInstance().format(country.casesToday());
+        String today = NumberFormat.getInstance().format(country.getCasesToday());
         today += " ("+sign+NumberFormat.getInstance().format(change)+")";
-
-        switch (country.daysNoChanges()) {
-            case 0:
-            case 1:
-                tv1.setTextColor(getResources().getColor(R.color.red));
-                tv2.setTextColor(getResources().getColor(R.color.red));
-                tv3.setTextColor(getResources().getColor(R.color.red));
-                break;
-            case 2:
-            case 3:
-            case 4:
-                tv1.setTextColor(getResources().getColor(R.color.orange));
-                tv2.setTextColor(getResources().getColor(R.color.orange));
-                tv3.setTextColor(getResources().getColor(R.color.orange));
-                break;
-            case 5:
-            case 6:
-                tv1.setTextColor(getResources().getColor(R.color.yellow));
-                tv2.setTextColor(getResources().getColor(R.color.yellow));
-                tv3.setTextColor(getResources().getColor(R.color.yellow));
-                break;
-            default:
-                tv1.setTextColor(getResources().getColor(R.color.green));
-                tv2.setTextColor(getResources().getColor(R.color.green));
-                tv3.setTextColor(getResources().getColor(R.color.green));
-        }
 
         tv1.setText(country.getName()); // world or country
         tv2.setText(formatDate(mLastDate)); // last date
@@ -337,33 +311,26 @@ public class MapsActivity extends FragmentActivity implements
         Bitmap icon;
 
         for (Country country : mCountries.values()) {
-            if (country.casesToday() == 0) continue;
+            if (country.getCasesToday() == 0) continue;
             LatLng coords = country.getCoords();
             if (coords.longitude != 0 && coords.longitude != 0) {
 
-                switch (country.daysNoChanges()) {
-                    case 0:
-                    case 1:
-                        color1 = backgroundColor1r;
-                        color2 = backgroundColor2r;
-                        break;
-                    case 2:
-                    case 3:
-                    case 4:
-                        color1 = backgroundColor1o;
-                        color2 = backgroundColor2o;
-                        break;
-                    case 5:
-                    case 6:
-                        color1 = backgroundColor1y;
-                        color2 = backgroundColor2y;
-                        break;
-                    default:
-                        color1 = backgroundColor1g;
-                        color2 = backgroundColor2g;
+                int daysNoChange = country.getDaysNoChange();
+                if (daysNoChange >= 10) {
+                    color1 = backgroundColor1g;
+                    color2 = backgroundColor2g;
+                } else if (daysNoChange >= 6) {
+                    color1 = backgroundColor1y;
+                    color2 = backgroundColor2y;
+                } else if (daysNoChange >= 2) {
+                    color1 = backgroundColor1o;
+                    color2 = backgroundColor2o;
+                } else {
+                    color1 = backgroundColor1r;
+                    color2 = backgroundColor2r;
                 }
 
-                today = NumberFormat.getInstance().format(country.casesToday());
+                today = NumberFormat.getInstance().format(country.getCasesToday());
                 icon = textAsBitmap(today, fontSize, fontColor, mTF, color1, color2);
 
                 // add to cluster

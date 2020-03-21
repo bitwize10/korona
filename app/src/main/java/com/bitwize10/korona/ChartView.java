@@ -103,26 +103,19 @@ public class ChartView extends View {
         int x, y;
         int color1, color2;
 
-        switch (mCountry.daysNoChanges()) {
-            case 0:
-            case 1:
-                color1 = mColor1r;
-                color2 = mColor2r;
-                break;
-            case 2:
-            case 3:
-            case 4:
-                color1 = mColor1o;
-                color2 = mColor2o;
-                break;
-            case 5:
-            case 6:
-                color1 = mColor1y;
-                color2 = mColor2y;
-                break;
-            default:
-                color1 = mColor1g;
-                color2 = mColor2g;
+        int daysNoChange = mCountry.getDaysNoChange();
+        if (daysNoChange >= 10) {
+            color1 = mColor1g;
+            color2 = mColor2g;
+        } else if (daysNoChange >= 6) {
+            color1 = mColor1y;
+            color2 = mColor2y;
+        } else if (daysNoChange >= 2) {
+            color1 = mColor1o;
+            color2 = mColor2o;
+        } else {
+            color1 = mColor1r;
+            color2 = mColor2r;
         }
 
         // move to first point ...

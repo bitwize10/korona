@@ -74,7 +74,7 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
                 .draggable(false)
                 .icon(BitmapDescriptorFactory.fromBitmap(item.getIcon()))
                 .title(item.getTitle())
-                .zIndex(item.getCountry().casesToday())
+                .zIndex(item.getCountry().getCasesToday())
                 ;
 
         // custom font in info window
@@ -105,33 +105,33 @@ public class ClusterRenderer extends DefaultClusterRenderer<ClusterItem> {
     }
 
 
-    // Draw multiple markers
+    // Draw multiple markers (a cluster)
     @Override
     protected void onBeforeClusterRendered(Cluster<ClusterItem> cluster, MarkerOptions markerOptions) {
 
         int color1, color2;
         int clusterCasesToday = 0;
-        int clusterCases4daysAgo = 0;
+        int clusterCases2daysAgo = 0;
         int clusterCases6daysAgo = 0;
-        int clusterCases7daysAgo = 0;
+        int clusterCases10daysAgo = 0;
 
         for (ClusterItem ci : cluster.getItems()) {
             ci.setSelected(false);
-            clusterCasesToday += ci.getCountry().casesToday();
-            clusterCases4daysAgo += ci.getCountry().casesNdaysAgo(4);
-            clusterCases6daysAgo += ci.getCountry().casesNdaysAgo(6);
-            clusterCases7daysAgo += ci.getCountry().casesNdaysAgo(7);
+            clusterCasesToday += ci.getCountry().getCasesToday();
+            clusterCases2daysAgo += ci.getCountry().getCasesNdaysAgo(2);
+            clusterCases6daysAgo += ci.getCountry().getCasesNdaysAgo(6);
+            clusterCases10daysAgo += ci.getCountry().getCasesNdaysAgo(10);
         }
 
-        if (clusterCasesToday == clusterCases4daysAgo) {
-            color1 = mBackgroundColor1o;
-            color2 = mBackgroundColor2o;
+        if (clusterCasesToday == clusterCases10daysAgo) {
+            color1 = mBackgroundColor1g;
+            color2 = mBackgroundColor2g;
         } else if (clusterCasesToday == clusterCases6daysAgo) {
             color1 = mBackgroundColor1y;
             color2 = mBackgroundColor2y;
-        } else if (clusterCasesToday == clusterCases7daysAgo) {
-            color1 = mBackgroundColor1g;
-            color2 = mBackgroundColor2g;
+        } else if (clusterCasesToday == clusterCases2daysAgo) {
+            color1 = mBackgroundColor1o;
+            color2 = mBackgroundColor2o;
         } else {
             color1 = mBackgroundColor1r;
             color2 = mBackgroundColor2r;

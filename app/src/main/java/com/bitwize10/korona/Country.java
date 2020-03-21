@@ -7,14 +7,12 @@ import com.google.android.gms.maps.model.LatLng;
 public class Country {
 
     private String name = "";
-
     private double latitude = 0.0;
     private double longitude = 0.0;
+    private int[] data;
+    private int daysNoChange = 0;
 
-
-    int[] data;
-
-    public Country(String name) {
+    Country(String name) {
         this.name = name;
     }
 
@@ -34,77 +32,48 @@ public class Country {
         }
     }
 
-    /*
-    public void setColumn(int column) {
-        this.column = column;
-    }
-    */
 
-
-    public void setData(int[] data) {
+    void setData(int[] data) {
         this.data = data;
+        this.daysNoChange = daysNoChange();
     }
 
-
-    public int[] getData() {
-        return data;
-    }
-
-    public int casesToday() {
-        return casesNdaysAgo(0);
-    }
-
-    public int casesYesterday() {
-        return casesNdaysAgo(1);
-    }
-
-    public int casesNdaysAgo(int n) {
-        if (data == null || n > data.length-1) return 0;
-        return data[data.length-1-n];
-    }
-
-    public int daysNoChanges(){
+    private int daysNoChange(){
         int daysNoChanges = 0;
-        int today = casesToday();
+        int today = getCasesToday();
         for (int i = data.length-2; i >= 0; i--) {
-            if (data[i] == today) {
-                daysNoChanges++;
-            } else {
-                break;
-            }
+            if (data[i] == today) daysNoChanges++;
+            else break;
         }
         return daysNoChanges;
     }
 
-    /*
-    public int cases2daysAgo() {
-        return cases_2days_ago;
-    }
-    */
 
-    /*
-    public void setCasesToday(int cases_today) {
-        this.cases_today = cases_today;
+    int[] getData() {
+        return data;
     }
 
-    public void setCasesYesterday(int cases_yesterday) {
-        this.cases_yesterday = cases_yesterday;
+    int getCasesToday() {
+        return getCasesNdaysAgo(0);
     }
 
-    public void setCases2daysAgo(int cases_2days_ago) {
-        this.cases_2days_ago = cases_2days_ago;
+    int getCasesYesterday() {
+        return getCasesNdaysAgo(1);
     }
-    */
 
-    public String getName() {
+    int getCasesNdaysAgo(int n) {
+        if (data == null || n > data.length-1) return 0;
+        return data[data.length-1-n];
+    }
+
+    int getDaysNoChange() {
+        return daysNoChange;
+    }
+
+    String getName() {
         return name;
     }
 
-    /*
-    public int getColumn() {
-        return column;
-    }
-    */
 
     public double getLatitude() {
         return latitude;
