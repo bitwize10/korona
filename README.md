@@ -1,6 +1,7 @@
 # Korona
 Android app to track coronavirus status worldwide.
-No permissions required, no data saved, and no data sent.
+
+No permissions required, no data is saved, and no data is sent.
 
 # Download
 Latest .apk file: [https://github.com/bitwize10/korona/raw/master/app/release/Korona.apk](https://github.com/bitwize10/korona/raw/master/app/release/Korona.apk)
