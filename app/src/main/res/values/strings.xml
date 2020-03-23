@@ -9,4 +9,7 @@
 
     <string name="loading_map">Loading map …</string>
 
+    <string name="dialog_close">Close</string>
+    <string name="dialog_no_change">No new infections! Woohoo!</string>
+
 </resources>

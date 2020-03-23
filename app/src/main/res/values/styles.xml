@@ -5,7 +5,9 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorPrimary">@color/colorAccent</item>
         <item name="android:fontFamily">@font/audiowide_regular</item>
+        <item name="android:navigationBarColor">@color/darkRed1</item>
     </style>
 
 
@@ -16,5 +18,16 @@
         <item name="windowNoTitle">true</item>
         <item name="android:windowTranslucentStatus">true</item>
     </style>
+
+
+    <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/colorAccent</item>
+        <!-- Used for the title and text -->
+        <item name="android:textColorPrimary">@color/colorAccent</item>
+        <!-- Used for the background -->
+        <item name="android:background">@color/darkRed1</item>
+    </style>
+
 
 </resources>

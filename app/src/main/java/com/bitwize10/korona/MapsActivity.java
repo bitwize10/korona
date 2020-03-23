@@ -1,10 +1,12 @@
 package com.bitwize10.korona;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -15,9 +17,15 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -28,9 +36,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
 
@@ -40,6 +50,8 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -60,11 +72,12 @@ public class MapsActivity extends FragmentActivity implements
     private GoogleMap mMap;
     private ClusterManager<ClusterItem> mClusterManager;
     private Typeface mTF;
+    private AlertDialog mDialog;
+    private HashMap<String, Country> mCountries = new HashMap<>();
 
     private String mSelectedCountry = "World";
     private String mLastDate = "";
-
-    private HashMap<String, Country> mCountries = new HashMap<>();
+    private boolean mOpenDialog = false;
 
 
     @Override
@@ -81,9 +94,10 @@ public class MapsActivity extends FragmentActivity implements
         getWindow().setStatusBarColor(Color.TRANSPARENT);
 
 
-        // set custom font to TextView
-        TextView tv = findViewById(R.id.map_overlay);
         mTF = ResourcesCompat.getFont(getApplicationContext(), R.font.audiowide_regular);
+
+        // set custom font to TextView
+        TextView tv = findViewById(R.id.loading_overlay);
         tv.setTypeface(mTF);
 
 
@@ -95,6 +109,7 @@ public class MapsActivity extends FragmentActivity implements
 
         if (savedInstanceState != null) {
             mSelectedCountry = savedInstanceState.getString("mSelectedCountry", mSelectedCountry);
+            mOpenDialog = savedInstanceState.getBoolean("mOpenDialog", mOpenDialog);
         }
 
         requestData();
@@ -105,6 +120,12 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+
+        if (mDialog != null && mDialog.isShowing()) {
+            mDialog.cancel();
+            outState.putBoolean("mOpenDialog", true);
+        }
+
         outState.putString("mSelectedCountry", mSelectedCountry);
     }
 
@@ -157,9 +178,8 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 
-    private void showMap() {
-        // hide map overlay and show map
-        findViewById(R.id.map_overlay).setVisibility(View.GONE);
+    private void hideLoading() {
+        findViewById(R.id.loading_overlay).setVisibility(View.GONE);
     }
 
 
@@ -169,22 +189,28 @@ public class MapsActivity extends FragmentActivity implements
                 response -> {
                     CSVReader reader = new CSVReader(new StringReader(response));
                     try {
-                        fillCountries(reader.readAll());
-                        showData(mSelectedCountry); // show world data by default
-                        addMarkers();
+                        List<String[]> allData = reader.readAll();
+                        if (dataOK(allData)) {
+                            fillCountries(allData);
+                            showData(mSelectedCountry); // show world data by default
+                            addMarkers();
+                            if (mOpenDialog) showTrendingDialog(null);
+                        } else {
+                            throw new IOException("Data format incorrect: " +response);
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                         log("ERROR reading data");
                         TextView tv1 = findViewById(R.id.tv_text1);
                         tv1.setText(getString(R.string.error_reading_data));
                     }
-                    showMap();
+                    hideLoading();
                 },
                 error -> {
                     log("ERROR requesting data");
                     TextView tv1 = findViewById(R.id.tv_text1);
                     tv1.setText(getString(R.string.error_requesting_data));
-                    showMap();
+                    hideLoading();
                 }
         );
         final RequestQueue queue = Volley.newRequestQueue(this);
@@ -224,7 +250,7 @@ public class MapsActivity extends FragmentActivity implements
         tv2.setTextColor(color);
         tv3.setTextColor(color);
 
-        int change = country.getCasesToday() - country.getCasesYesterday();
+        int change = country.getChange();
         char sign = (change < 0)? '-' : '+';
 
         String today = NumberFormat.getInstance().format(country.getCasesToday());
@@ -252,6 +278,8 @@ public class MapsActivity extends FragmentActivity implements
     // fills countries with data
     private void fillCountries(List<String[]> allData) {
 
+        if (!dataOK(allData)) return;
+
         // header is: Province/State,Country/Region,Lat,Long,day1,day2,...
         String[] header = allData.get(0);
         mLastDate = header[header.length-1];
@@ -259,7 +287,7 @@ public class MapsActivity extends FragmentActivity implements
         String provinceName, countryName, lat, lon;
         Country country;
         int[] data;
-        int[] worldData = new int[allData.get(0).length-4];
+        int[] worldData = new int[header.length-4];
 
         for (int row = 1; row < allData.size(); row++) { // skip first row
             String[] rowData = allData.get(row);
@@ -280,7 +308,8 @@ public class MapsActivity extends FragmentActivity implements
             country.setData(data);
 
             // add country
-            mCountries.put(countryName, country);
+            if (country.getCasesToday() > 0)
+                mCountries.put(countryName, country);
 
         }
 
@@ -289,6 +318,34 @@ public class MapsActivity extends FragmentActivity implements
         country.setData(worldData);
         mCountries.put(country.getName(), country);
 
+        // fix some countries
+        country = mCountries.get("Slovenia");
+        if (country != null) country.setCoords(46.0099220, 14.551964);
+        country = mCountries.get("United Kingdom");
+        if (country != null) country.setCoords(53.027885, -1.466349);
+        country = mCountries.remove("Holy See");
+        if (country != null) {
+            country.setName("Vatican");
+            mCountries.put(country.getName(), country);
+        }
+
+    }
+
+
+    // check if data is OK
+    private boolean dataOK(List<String[]> allData) {
+
+        if (allData.size() < 2) return false;
+
+        // header should be: Province/State,Country/Region,Lat,Long,day1,day2,...
+        String[] header = allData.get(0);
+        if (header.length < 6) return false;
+        if (!header[0].equals("Province/State")) return false;
+        if (!header[1].equals("Country/Region")) return false;
+        if (!header[2].equals("Lat")) return false;
+        if (!header[3].equals("Long")) return false;
+
+        return true;
     }
 
 
@@ -296,6 +353,7 @@ public class MapsActivity extends FragmentActivity implements
 
         int fontSize = dp2px(12f);
         int fontColor = getResources().getColor(R.color.darkRed1);
+        NumberFormat nf = NumberFormat.getInstance();
 
         int backgroundColor1r = getResources().getColor(R.color.darkerRed);
         int backgroundColor2r = getResources().getColor(R.color.red);
@@ -311,7 +369,6 @@ public class MapsActivity extends FragmentActivity implements
         Bitmap icon;
 
         for (Country country : mCountries.values()) {
-            if (country.getCasesToday() == 0) continue;
             LatLng coords = country.getCoords();
             if (coords.longitude != 0 && coords.longitude != 0) {
 
@@ -330,7 +387,7 @@ public class MapsActivity extends FragmentActivity implements
                     color2 = backgroundColor2r;
                 }
 
-                today = NumberFormat.getInstance().format(country.getCasesToday());
+                today = nf.format(country.getCasesToday());
                 icon = textAsBitmap(today, fontSize, fontColor, mTF, color1, color2);
 
                 // add to cluster
@@ -347,9 +404,89 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 
+
+    public void showTrendingDialog(View v) {
+
+        // add countries with change
+        List<Country> countryByChange = new ArrayList<>();;
+        for (Country c : mCountries.values()) {
+            if (c.getChange() > 0 && !c.getName().equals("World")) {
+                countryByChange.add(c);
+            }
+        }
+
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this, R.style.MyAlertDialogStyle);
+
+        if (countryByChange.size() > 0) {
+
+            // sort by change
+            Collections.sort(countryByChange);
+
+            ArrayAdapter<Country> adapter = new CountryAdapter(getApplicationContext(), countryByChange);
+            ListView lv = new ListView(this);
+            int[] colors = {getResources().getColor(R.color.colorPrimary),
+                    getResources().getColor(R.color.colorAccent), getResources().getColor(R.color.colorPrimary)};
+            lv.setDivider(new GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT, colors));
+            //lv.setDivider(new ColorDrawable(getResources().getColor(R.color.colorPrimary)));
+            lv.setDividerHeight(1);
+            lv.setAdapter(adapter);
+
+            lv.setOnItemClickListener((listView, itemView, itemPosition, itemId)
+                    -> showCountryOnMap(countryByChange.get(itemPosition)));
+
+            dialog.setView(lv);
+        } else {
+            TextView tv = new TextView(this);
+            tv.setText(R.string.dialog_no_change);
+            tv.setTextColor(getResources().getColor(R.color.colorAccent));
+            tv.setTypeface(mTF);
+            int padding = dp2px(24);
+            tv.setPadding(padding,padding,padding,padding);
+            dialog.setView(tv);
+        }
+
+        String versionName = "v"+BuildConfig.VERSION_NAME;
+        dialog.setCancelable(true)
+              .setNeutralButton(versionName, null) // stick app version here...
+              .setNegativeButton(R.string.dialog_close, null);
+
+        // show dialog
+        mDialog = dialog.create();
+        mDialog.show();
+
+    }
+
+
+    private void showCountryOnMap(Country country) {
+
+        mDialog.cancel();
+        showData(country.getName());
+
+        // zoom into country
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(country.getCoords())
+                .zoom(5f)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 850/*duration*/, null);
+
+        // select country on map
+        mSelectedCountry = country.getName();
+        for (ClusterItem ci : mClusterManager.getAlgorithm().getItems()) {
+            if (ci.getCountry().getName().equals(country.getName())) {
+                ci.setSelected(true);
+            }
+        }
+        for (Marker marker : mClusterManager.getMarkerCollection().getMarkers()) {
+            if (marker.getTitle().equals(country.getName())) {
+                marker.showInfoWindow();
+            }
+        }
+
+    }
+
+
     @Override
     public void onMapClick(LatLng point) {
-        //log("clicked on map: " +point.latitude+ ", "+point.longitude);
         mSelectedCountry = "World";
         showData(mSelectedCountry);
     }
@@ -370,7 +507,7 @@ public class MapsActivity extends FragmentActivity implements
 
         // Animate camera to the bounds
         try {
-            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 50));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, dp2px(32)), 850/*duration*/, null);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -475,6 +612,75 @@ public class MapsActivity extends FragmentActivity implements
 
     static int dp2px(float dp) {
         return Math.round(dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+
+    private class CountryAdapter extends ArrayAdapter<Country> {
+
+        Context mContext;
+        NumberFormat mNF;
+
+        private class ViewHolder {
+            TextView text1;
+            TextView text2;
+            ChartView chartView;
+        }
+
+
+        CountryAdapter(Context context, List<Country> countries) {
+            super(context, R.layout.list_item, R.id.text1, countries);
+            this.mContext = context;
+            this.mNF = NumberFormat.getInstance();
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+
+            // Get the data item for this position
+            Country country = getItem(position);
+
+            View row = convertView;
+            ViewHolder viewHolder; // view lookup cache stored in tag
+
+            // inflate a layout and set up the view holder if a view can't be reused
+            if (convertView == null) {
+
+                // Inflate view from layout file
+                row = getLayoutInflater().inflate(R.layout.list_item, parent, false);
+
+                // Set up holder and assign it to the View
+                viewHolder = new ViewHolder();
+
+                viewHolder.text1 = row.findViewById(R.id.text1);
+                viewHolder.text2 = row.findViewById(R.id.text2);
+                viewHolder.chartView = row.findViewById(R.id.cv_chart);
+
+                viewHolder.text1.setTypeface(mTF);
+                viewHolder.text2.setTypeface(mTF);
+
+                row.setTag(viewHolder);
+
+            } else {
+                viewHolder = (ViewHolder) row.getTag();
+            }
+
+            if (country != null) {
+
+                String change = "+"+mNF.format(country.getChange());
+
+                viewHolder.text1.setText(country.getName());
+                viewHolder.text2.setText(change);
+
+                viewHolder.chartView.setCountry(country);
+                viewHolder.chartView.invalidate(); // redraw
+
+            }
+
+            return row;
+
+        }
+
     }
 
 

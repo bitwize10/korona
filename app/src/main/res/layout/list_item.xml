@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="6dp"
+    tools:ignore="SpUsage,RtlHardcoded,RtlSymmetry">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="75dp"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:id="@+id/text1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16dp"
+            android:textStyle="bold"
+            android:textColor="@color/colorAccent"
+            android:singleLine="true"
+            android:paddingLeft="8dp"
+            android:paddingTop="12dp"
+            android:ellipsize="middle"
+            />
+
+        <TextView
+            android:id="@+id/text2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="24dp"
+            android:textColor="@color/colorAccent"
+            android:maxLines="1"
+            android:paddingLeft="8dp"
+            android:paddingTop="2dp"
+            />
+
+    </LinearLayout>
+
+    <com.bitwize10.korona.ChartView
+        android:id="@+id/cv_chart"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="75dp"
+        android:paddingTop="6dp"
+        android:paddingRight="6dp"
+        android:paddingBottom="6dp"
+        />
+
+</LinearLayout>

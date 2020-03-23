@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     tools:ignore="SpUsage">
 
     <fragment
@@ -12,19 +12,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".MapsActivity" />
-
-    <!-- hide map by default -->
-    <TextView
-        android:id="@+id/map_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/loading_map"
-        android:textColor="@color/colorAccent"
-        android:gravity="center"
-        android:background="@color/darkRed2"
-        android:visibility="visible"
-        />
-
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -118,7 +105,34 @@
             android:layout_above="@+id/ll_data"
             />
 
+
+        <com.getbase.floatingactionbutton.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/ll_data"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="12dp"
+            android:onClick="showTrendingDialog"
+            fab:fab_icon="@drawable/ic_toc_black_24dp"
+            fab:fab_colorNormal="@color/colorAccent"
+            fab:fab_colorPressed="@color/colorPrimary"
+            fab:fab_size="mini"
+            tools:ignore="RtlHardcoded" />
+
+
     </RelativeLayout>
+
+
+    <TextView
+        android:id="@+id/loading_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/loading_map"
+        android:textColor="@color/colorAccent"
+        android:gravity="center"
+        android:background="@color/darkRed2"
+        android:visibility="visible"
+        />
 
 
 </FrameLayout>

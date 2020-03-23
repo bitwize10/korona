@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
-public class Country {
+public class Country implements Comparable<Country> {
 
     private String name = "";
     private double latitude = 0.0;
@@ -53,6 +53,10 @@ public class Country {
         return data;
     }
 
+    int getChange() {
+        return getCasesToday() - getCasesYesterday();
+    }
+
     int getCasesToday() {
         return getCasesNdaysAgo(0);
     }
@@ -74,13 +78,13 @@ public class Country {
         return name;
     }
 
-
-    public double getLatitude() {
-        return latitude;
+    void setName(String name) {
+        this.name = name;
     }
 
-    public double getLongitude() {
-        return longitude;
+    void setCoords(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     LatLng getCoords(){
@@ -91,4 +95,9 @@ public class Country {
         Log.i("Country", msg);
     }
 
+    @Override
+    public int compareTo(Country country) {
+        // sort by change descending
+        return Integer.compare(country.getChange(), this.getChange());
+    }
 }
