@@ -278,8 +278,6 @@ public class MapsActivity extends FragmentActivity implements
     // fills countries with data
     private void fillCountries(List<String[]> allData) {
 
-        if (!dataOK(allData)) return;
-
         // header is: Province/State,Country/Region,Lat,Long,day1,day2,...
         String[] header = allData.get(0);
         mLastDate = header[header.length-1];
