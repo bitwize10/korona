@@ -4,8 +4,8 @@
 # Covers files to be ignored for android development using Android Studio.
 
 # Built application files
-*.apk
-*.ap_
+#*.apk
+#*.ap_
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -36,7 +36,7 @@ proguard/
 
 # Android Studio
 /*/build/
-app/release/
+#app/release/
 /*/local.properties
 /*/out
 /*/*/build
@@ -168,6 +168,6 @@ Temporary Items
 .apdisk
 
 # Exclude release .apk file
-app/release/Korona.apk
+!/app/release/Korona.apk
 
 # End of https://www.gitignore.io/api/linux,macos,androidstudio
