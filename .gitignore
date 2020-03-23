@@ -167,4 +167,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Exclude release .apk file
+app/release/Korona.apk
+
 # End of https://www.gitignore.io/api/linux,macos,androidstudio
