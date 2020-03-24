@@ -65,7 +65,7 @@ public class MapsActivity extends FragmentActivity implements
         ClusterManager.OnClusterClickListener<ClusterItem>,
         ClusterManager.OnClusterItemClickListener<ClusterItem> {
 
-    private static String DATA_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv";
+    private static String DATA_URL = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv";
 
     private GoogleMap mMap;
     private ClusterManager<ClusterItem> mClusterManager;
