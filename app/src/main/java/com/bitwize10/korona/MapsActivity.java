@@ -277,29 +277,36 @@ public class MapsActivity extends FragmentActivity implements
     private void fillCountries(List<String[]> allData) {
 
         // header is: Province/State,Country/Region,Lat,Long,day1,day2,...
-        String[] header = allData.get(0);
+        String[] header = allData.remove(0); // remove header
         mLastDate = header[header.length-1];
 
         String provinceName, countryName, lat, lon;
         Country country;
+        int lastValue;
         int[] data;
         int[] worldData = new int[header.length-4];
 
-        for (int row = 1; row < allData.size(); row++) { // skip first row
-            String[] rowData = allData.get(row);
+        for (String[] rowData : allData) {
             provinceName = rowData[0];
             countryName = rowData[1];
             lat = rowData[2];
             lon = rowData[3];
 
             if (!provinceName.isEmpty()) countryName = provinceName;
+            if (mCountries.containsKey(countryName)) continue; // skip duplicates
+
             country = new Country(countryName, lat, lon);
 
             // read the data
             data = new int[rowData.length-4];
+            lastValue = 0;
             for (int column = 4; column < rowData.length; column++) { // skip first 4 columns
-                data[column-4] = Integer.parseInt(rowData[column]);
-                worldData[column-4] += data[column-4];
+                try {
+                    int today = Integer.parseInt(rowData[column]);
+                    if (today > 0) lastValue = today;
+                } catch (NumberFormatException ignore) { }
+                data[column - 4] = lastValue;
+                worldData[column-4] += lastValue;
             }
             country.setData(data);
 
@@ -663,7 +670,9 @@ public class MapsActivity extends FragmentActivity implements
 
             if (country != null) {
 
-                String change = "+"+mNF.format(country.getChange());
+                int change_i = country.getChange();
+                char sign = (change_i < 0)? '-' : '+';
+                String change = sign+mNF.format(country.getChange());
 
                 viewHolder.text1.setText(country.getName());
                 viewHolder.text2.setText(change);
