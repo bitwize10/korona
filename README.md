@@ -9,6 +9,9 @@ https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_c
 # Download
 Latest .apk file: https://github.com/bitwize10/korona/raw/master/app/release/Korona.apk
 
+# Building
+If you plan to build the app yourself, don't forget to change the Google maps API key. The provided one won't work 😱
+
 # Screenshots
 ![screenshot1](/screenshots/screenshot1.jpg)
 ![screenshot2](/screenshots/screenshot2.jpg)
