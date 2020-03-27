@@ -8,8 +8,8 @@ android {
         applicationId "com.bitwize10.korona"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 115
-        versionName "1.1.5"
+        versionCode 120
+        versionName "1.2.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

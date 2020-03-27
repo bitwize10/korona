@@ -42,6 +42,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.clustering.ClusterManager;
 
+import org.w3c.dom.Text;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.DateFormat;
@@ -95,8 +97,8 @@ public class MapsActivity extends FragmentActivity implements
         mTF = ResourcesCompat.getFont(getApplicationContext(), R.font.audiowide_regular);
 
         // set custom font to TextView
-        TextView tv = findViewById(R.id.loading_overlay);
-        tv.setTypeface(mTF);
+        TextView tv_loading = findViewById(R.id.loading_overlay);
+        tv_loading.setTypeface(mTF);
 
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -192,7 +194,7 @@ public class MapsActivity extends FragmentActivity implements
                             fillCountries(allData);
                             showData(mSelectedCountry); // show world data by default
                             addMarkers();
-                            if (mOpenDialog) showTrendingDialog(null);
+                            if (mOpenDialog) showChangeDialog(null);
                         } else {
                             throw new IOException("Data format incorrect: " +response);
                         }
@@ -217,6 +219,23 @@ public class MapsActivity extends FragmentActivity implements
     }
 
 
+    // toggle between total cases and change
+    public void dataClick(View v) {
+
+        Country country = mCountries.get(mSelectedCountry);
+        ChartView chart = findViewById(R.id.chart);
+        if (country == null || chart == null) return;
+
+        boolean showChange = chart.toggleChange();
+        int chart_text = showChange ? R.string.change : R.string.total;
+        TextView tv_chart_text = findViewById(R.id.tv_chart_text);
+        tv_chart_text.setText(chart_text);
+        updateChart(country);
+
+    }
+
+
+
     // shows data at the bottom of the screen
     private void showData(String countryName) {
 
@@ -226,11 +245,13 @@ public class MapsActivity extends FragmentActivity implements
         TextView tv1 = findViewById(R.id.tv_text1);
         TextView tv2 = findViewById(R.id.tv_text2);
         TextView tv3 = findViewById(R.id.tv_text3);
+        TextView tv_chart_text = findViewById(R.id.tv_chart_text);
         int colorR = getResources().getColor(R.color.red);
         int colorO = getResources().getColor(R.color.orange);
         int colorY = getResources().getColor(R.color.yellow);
         int colorG = getResources().getColor(R.color.green);
         tv1.setTypeface(mTF); tv2.setTypeface(mTF); tv3.setTypeface(mTF);
+        tv_chart_text.setTypeface(mTF);
 
         int color;
         int daysNoChange = country.getDaysNoChange();
@@ -247,6 +268,7 @@ public class MapsActivity extends FragmentActivity implements
         tv1.setTextColor(color);
         tv2.setTextColor(color);
         tv3.setTextColor(color);
+        tv_chart_text.setTextColor(color);
 
         int change = country.getChange();
         char sign = (change < 0)? '-' : '+';
@@ -282,11 +304,12 @@ public class MapsActivity extends FragmentActivity implements
 
         String provinceName, countryName, lat, lon;
         Country country;
-        int lastValue;
-        int[] data;
+        int lastValue, change;
+        int[] data, changeData;
         int[] worldData = new int[header.length-4];
+        int[] worldChangeData = new int[header.length-4];
 
-        for (String[] rowData : allData) {
+        for (String[] rowData : allData) { // (each row is one country)
             provinceName = rowData[0];
             countryName = rowData[1];
             lat = rowData[2];
@@ -299,16 +322,20 @@ public class MapsActivity extends FragmentActivity implements
 
             // read the data
             data = new int[rowData.length-4];
-            lastValue = 0;
+            changeData = new int[rowData.length-4];
+            lastValue = change = 0;
             for (int column = 4; column < rowData.length; column++) { // skip first 4 columns
                 try {
                     int today = Integer.parseInt(rowData[column]);
+                    change = today - lastValue;
                     if (today > 0) lastValue = today;
                 } catch (NumberFormatException ignore) { }
                 data[column - 4] = lastValue;
+                changeData[column - 4] = change;
                 worldData[column-4] += lastValue;
+                worldChangeData[column-4] += change;
             }
-            country.setData(data);
+            country.setData(data, changeData);
 
             // add country
             if (country.getCasesToday() > 0)
@@ -318,7 +345,7 @@ public class MapsActivity extends FragmentActivity implements
 
         // add world
         country = new Country("World");
-        country.setData(worldData);
+        country.setData(worldData, worldChangeData);
         mCountries.put(country.getName(), country);
 
         // fix some countries
@@ -408,7 +435,7 @@ public class MapsActivity extends FragmentActivity implements
 
 
 
-    public void showTrendingDialog(View v) {
+    public void showChangeDialog(View v) {
 
         // add countries with change
         List<Country> countryByChange = new ArrayList<>();;
@@ -658,6 +685,8 @@ public class MapsActivity extends FragmentActivity implements
                 viewHolder.text1 = row.findViewById(R.id.text1);
                 viewHolder.text2 = row.findViewById(R.id.text2);
                 viewHolder.chartView = row.findViewById(R.id.cv_chart);
+
+                viewHolder.chartView.showChange(true);
 
                 viewHolder.text1.setTypeface(mTF);
                 viewHolder.text2.setTypeface(mTF);

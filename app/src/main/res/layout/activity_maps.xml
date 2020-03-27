@@ -39,6 +39,7 @@
             android:orientation="horizontal"
             android:layout_alignParentBottom="true"
             android:background="@color/darkRed2Transparent"
+            android:onClick="dataClick"
             >
 
             <LinearLayout
@@ -86,14 +87,33 @@
             </LinearLayout>
 
             <!-- chart -->
-            <com.bitwize10.korona.ChartView
-                android:id="@+id/chart"
+            <FrameLayout
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="75dp"
-                android:padding="6dp"
-                android:visibility="gone"
-                />
+                android:layout_weight="1"
+                >
+                <com.bitwize10.korona.ChartView
+                    android:id="@+id/chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="6dp"
+                    android:paddingRight="6dp"
+                    android:paddingBottom="6dp"
+                    android:paddingTop="14dp"
+                    android:visibility="gone"
+                    />
+                <TextView
+                    android:id="@+id/tv_chart_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_horizontal|top"
+                    android:textAllCaps="true"
+                    android:textColor="@color/colorAccent"
+                    android:maxLines="1"
+                    android:textSize="10dp"
+                    android:text="@string/total"
+                    />
+            </FrameLayout>
 
         </LinearLayout>
 
@@ -112,7 +132,7 @@
             android:layout_above="@+id/ll_data"
             android:layout_alignParentRight="true"
             android:layout_marginBottom="12dp"
-            android:onClick="showTrendingDialog"
+            android:onClick="showChangeDialog"
             fab:fab_icon="@drawable/ic_toc_black_24dp"
             fab:fab_colorNormal="@color/colorAccent"
             fab:fab_colorPressed="@color/colorPrimary"

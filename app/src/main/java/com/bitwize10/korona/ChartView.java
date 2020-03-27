@@ -26,6 +26,7 @@ public class ChartView extends View {
     private int mHeight = 0;
 
     private Country mCountry;
+    private boolean showChange = false;
 
 
     public ChartView(Context context) {
@@ -84,10 +85,19 @@ public class ChartView extends View {
         mCountry = country;
     }
 
+    public void showChange(boolean showChange) {
+        this.showChange = showChange;
+    }
+
+    public boolean toggleChange() {
+        this.showChange = !this.showChange;
+        return this.showChange;
+    }
+
     private void drawData(Canvas canvas) {
         if (mCountry == null) return;
 
-        int[] data = mCountry.getData();
+        int[] data = showChange ? mCountry.getChangeData() : mCountry.getData();
 
         final int w = mWidth-getPaddingLeft()-getPaddingRight();
         final int h = mHeight-getPaddingBottom()-getPaddingTop();
@@ -139,8 +149,8 @@ public class ChartView extends View {
         x += halfWidth;
         path.lineTo(x, y); // top right
         path.lineTo(x, h+getPaddingTop()+halfWidth); // bottom right
-        y = h - (int)(data[0]*factorY) + getPaddingTop();
-        path.lineTo(getPaddingLeft(), y+halfWidth); // bottom left
+        //y = h - (int)(data[0]*factorY) + getPaddingTop();
+        path.lineTo(getPaddingLeft(), h+halfWidth+getPaddingTop()); // bottom left
         path.close(); // start point
         LinearGradient gradient = new LinearGradient(
                 0, 0,

@@ -10,6 +10,7 @@ public class Country implements Comparable<Country> {
     private double latitude = 0.0;
     private double longitude = 0.0;
     private int[] data;
+    private int[] changeData; // daily changes
     private int daysNoChange = 0;
 
     Country(String name) {
@@ -33,8 +34,9 @@ public class Country implements Comparable<Country> {
     }
 
 
-    void setData(int[] data) {
+    void setData(int[] data, int[] changeData) {
         this.data = data;
+        this.changeData = changeData;
         this.daysNoChange = daysNoChange();
     }
 
@@ -51,6 +53,10 @@ public class Country implements Comparable<Country> {
 
     int[] getData() {
         return data;
+    }
+
+    int[] getChangeData() {
+        return changeData;
     }
 
     int getChange() {
