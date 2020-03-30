@@ -88,9 +88,11 @@
 
             <!-- chart -->
             <FrameLayout
+                android:id="@+id/fl_chart_container"
                 android:layout_width="0dp"
                 android:layout_height="75dp"
                 android:layout_weight="1"
+                android:visibility="gone"
                 >
                 <com.bitwize10.korona.ChartView
                     android:id="@+id/chart"
@@ -100,7 +102,6 @@
                     android:paddingRight="6dp"
                     android:paddingBottom="6dp"
                     android:paddingTop="14dp"
-                    android:visibility="gone"
                     />
                 <TextView
                     android:id="@+id/tv_chart_text"

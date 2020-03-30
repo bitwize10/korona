@@ -13,6 +13,6 @@
     <string name="dialog_no_change">No new infections! Woohoo!</string>
 
     <string name="total">Total</string>
-    <string name="change">Change</string>
+    <string name="change">New</string>
 
 </resources>

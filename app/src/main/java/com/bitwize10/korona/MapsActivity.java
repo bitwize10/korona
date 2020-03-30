@@ -23,6 +23,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -287,8 +288,10 @@ public class MapsActivity extends FragmentActivity implements
 
     private void updateChart(Country country) {
 
+        FrameLayout fl_chart_container = findViewById(R.id.fl_chart_container);
+        fl_chart_container.setVisibility(View.VISIBLE);
+
         ChartView chart = findViewById(R.id.chart);
-        chart.setVisibility(View.VISIBLE);
         chart.setCountry(country);
         chart.invalidate(); // redraw
 
